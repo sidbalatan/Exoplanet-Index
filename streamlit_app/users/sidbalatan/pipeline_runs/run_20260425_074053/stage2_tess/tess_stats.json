@@ -1,0 +1,9 @@
+{
+  "input_survivors": 1,
+  "tess_passed": 0,
+  "failed": 1,
+  "unmatched": 0,
+  "contamination_fails": 1,
+  "radius_mismatches": 1,
+  "matched_at": "2026-04-25T07:41:32.055352"
+}

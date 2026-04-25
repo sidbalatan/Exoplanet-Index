@@ -1,0 +1,2 @@
+source_id,TIC ID,Gaia Teff (K),Tmag,Radius TIC (Rsun),Mass TIC (Msun),Contamination,Contam. Flag,TESS Sectors,Radius Match,Matched,_contam_ok,_radius_match
+148923048576102400,2932779415,4500,9.81,0.841,0.904,0.106,WARNING,12,MISMATCH,True,False,False
