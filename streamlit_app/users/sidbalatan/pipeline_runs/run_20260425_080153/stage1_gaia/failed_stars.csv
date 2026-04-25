@@ -1,0 +1,8 @@
+source_id,Teff (3900-5300 K),logg (>= 4.0),Parallax SNR (> 5),RUWE (< 1.4),Status,Reasons
+1234567890123456789,5181.0,4.22,815.9,1.75,FAILED,High RUWE: 1.75 (need <1.4) - possible binary
+2345678901234567890,3617.0,5.48,1.7,1.67,FAILED,Too cool: Teff=3617K (need >=3900K); Poor parallax: SNR=1.7 (need >5); High RUWE: 1.67 (need <1.4) - possible binary
+3456789012345678901,5822.0,3.99,91.2,0.82,FAILED,Too hot: Teff=5822K (need <=5300K); Giant star: logg=3.99 (need >=4.0)
+4567890123456789012,4886.0,3.73,49.3,0.99,FAILED,Giant star: logg=3.73 (need >=4.0)
+5678901234567890123,4529.0,3.24,35.3,1.32,FAILED,Giant star: logg=3.24 (need >=4.0)
+6789012345678901234,3516.0,5.25,152.3,1.91,FAILED,Too cool: Teff=3516K (need >=3900K); High RUWE: 1.91 (need <1.4) - possible binary
+8901234567890123456,4160.0,4.37,88.7,1.89,FAILED,High RUWE: 1.89 (need <1.4) - possible binary

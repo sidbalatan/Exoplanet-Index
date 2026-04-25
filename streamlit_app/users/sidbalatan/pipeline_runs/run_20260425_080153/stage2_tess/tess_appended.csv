@@ -1,0 +1,3 @@
+source_id,TIC ID (Required),Gaia Teff (K),Tmag,Contamination (<= 0.10),Radius TIC (Rsun),Radius Gaia est. (Rsun),Radius Match (<= 20% diff),Mass TIC (Msun),TESS Sectors,Status,Reasons
+7890123456789012345,2932779415,4500,9.81,0.106,0.841,0.608,MISMATCH,0.904,12,FAILED,High contamination AND radius mismatch
+9012345678901234567,4861225824,4500,11.14,0.11,0.675,0.608,MATCH,0.91,1,FAILED,High contamination

@@ -1,0 +1,2 @@
+source_id,Gaia Teff (K),W1 mag,W2 mag,W1-W2 (< 0.50),IR Excess? (Need NO),B mag,V mag,B-V (0.60-1.20),PM total (mas/yr) (> 20),Status,Reasons
+3456789012345678901,4500,11.71,10.42,1.29,YES,16.6,16.18,0.42,189.0,FAILED,WISE IR excess: W1-W2=1.29 (need <0.5) — possible dust disk or binary; B-V color outside range: 0.42 (need 0.6-1.2)

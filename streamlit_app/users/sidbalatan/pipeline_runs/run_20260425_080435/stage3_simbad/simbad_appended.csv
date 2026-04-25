@@ -1,0 +1,2 @@
+source_id,Spectral Type (Must be KV),Binary Flag (Must be No),Variable Flag (Must be No),Proper Motion RA (mas/yr),Proper Motion Dec (mas/yr),Radial Velocity (km/s),Status,Reasons
+3456789012345678901,M1V,NO,NO,-165.3,-214.8,-69.1,FAILED,Spectral type M1V is not a K-dwarf

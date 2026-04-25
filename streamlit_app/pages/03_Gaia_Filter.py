@@ -45,7 +45,7 @@ st.markdown("---")
 if st.button("Run Gaia Filter", type="primary"):
     with st.spinner("Querying Gaia DR3 and applying filters..."):
 
-        np.random.seed(42)
+        np.random.seed(99)
 
         all_stars = []
         for target_id in st.session_state.target_ids:
