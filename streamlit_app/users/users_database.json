@@ -7,6 +7,14 @@
       "email_verified": true,
       "registered_at": "2026-04-25T05:33:20.197533",
       "last_login": null
+    },
+    "sidbalatan": {
+      "username": "sidbalatan",
+      "email": "sidcb@ayuyang.com",
+      "password_hash": "853c0e78067291deb2543ff1dfd8a0f49b36f2839d43746daf2da981ca5c56e3",
+      "email_verified": true,
+      "registered_at": "2026-04-25T05:45:38.237452",
+      "last_login": null
     }
   }
 }

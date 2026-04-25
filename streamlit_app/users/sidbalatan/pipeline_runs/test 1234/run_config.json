@@ -1,0 +1,7 @@
+{
+  "run_name": "test 1234",
+  "input_method": "Gaia DR3 IDs",
+  "n_targets": 1,
+  "created_at": "2026-04-25T05:58:14.215157",
+  "status": "targets_loaded"
+}
