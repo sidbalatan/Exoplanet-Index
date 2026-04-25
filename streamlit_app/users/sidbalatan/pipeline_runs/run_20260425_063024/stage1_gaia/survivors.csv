@@ -1,0 +1,2 @@
+source_id,teff_gspphot,logg_gspphot,parallax_snr,ruwe,passed,reasons
+150884576226588672,4436.0,5.38,60.8,0.9,True,All filters passed
