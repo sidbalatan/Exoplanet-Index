@@ -1,7 +1,13 @@
 venv/
+<<<<<<< HEAD
+__pycache__/
+*.pyc
+.env
+=======
 .env
 __pycache__/
 *.pyc
 users/*
 !users/.gitkeep
 
+>>>>>>> a1a96afc7b6a838a70a16f2ea9a036c1655529fd

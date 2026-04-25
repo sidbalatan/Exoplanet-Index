@@ -1,4 +1,6 @@
 import streamlit as st
-st.set_page_config(page_title="Exoplanet Community Index")
-st.title("K-Dwarf Exoplanet Search")
-st.write("Welcome!")
+
+st.set_page_config(page_title="ExoX")
+
+st.title("ExoX - Exoplanet Index")
+st.write("Welcome to the Exoplanet Index!")
