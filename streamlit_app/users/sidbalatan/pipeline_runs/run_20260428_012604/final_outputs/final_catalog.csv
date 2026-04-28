@@ -1,0 +1,2 @@
+source_id,Teff (K),R_star (Rsun),Period (days),R_p (R_earth),Orbit (AU),In Cons. HZ?,T_eq (K) (200-300),S_eff (xEarth),Ecc (< 0.2),Tidal Lock,ESI (0-1) (> 0.8),HZD (-1 to +1) (0=center),SPH Class,HZ Grade,Habitable?
+3456789012345678901,4323.29925359053,0.53,0.5,3.3,0.429,NO,212.0,0.48,0.23,UNLOCKED,0.69,-1.5,Mesoplanet (Temperate),C,NO

@@ -1,0 +1,2 @@
+source_id,Gaia Teff (K),J mag,H mag,Ks mag,J-Ks (0.50-0.90),Status,Reasons
+3456789012345678901,4500,10.93,10.48,10.37,0.56,PASSED,J-Ks=0.56 within K-dwarf range (0.5-0.9)
