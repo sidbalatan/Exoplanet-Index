@@ -1,0 +1,6 @@
+source_id,J mag,H mag,Ks mag,J-Ks (0.50-0.90),Status,Reasons,_passed,_ra,_dec
+1.644807934188828e+17,0.02,0.01,0.02,-0.0,FAILED,J-Ks=-0.00,False,64.43314125427845,28.099173872134777
+1.5114921063577805e+17,0.02,0.02,0.01,0.0,FAILED,J-Ks=0.00,False,68.07986992635716,26.46726951193044
+1.5131561914419456e+17,,,,ERROR,ERROR,UsageFault: BAD_REQUEST: This geometric predicate is currently supported only wh,True,,
+1.4759889188546688e+17,,,,ERROR,ERROR,UsageFault: BAD_REQUEST: This geometric predicate is currently supported only wh,True,,
+2.0662367480943311e+18,0.04,0.09,0.05,-0.0,FAILED,J-Ks=-0.00,False,311.76921989038846,42.11961276748942

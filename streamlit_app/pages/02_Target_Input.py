@@ -93,6 +93,23 @@ else:
             df = pd.read_csv(uploaded_file)
             st.success(f"Loaded {len(df)} rows")
             
+            # Check for previously processed stars from this CSV
+            username = st.session_state.username
+            tracker_file = f"users/{username}/processed_stars.json"
+            previously_processed = []
+            
+            if os.path.exists(tracker_file):
+                with open(tracker_file, 'r') as f:
+                    tracker = json.load(f)
+                previously_processed = tracker.get("processed_ids", [])
+                
+                # Show how many already processed
+                already_done = sum(1 for _, row in df.iterrows() 
+                                  if str(row.get("objid", row.get("ra", ""))) in previously_processed)
+                if already_done > 0:
+                    st.info(f"{already_done} of {len(df)} stars already processed in previous runs. "
+                           f"The remaining {len(df) - already_done} will be processed.")
+            
             # Show preview
             st.dataframe(df.head(), use_container_width=True)
             
@@ -131,6 +148,33 @@ st.markdown("### Target Summary")
 if target_ids:
     target_ids = list(dict.fromkeys(target_ids))
     st.success(f"Detected {len(target_ids)} targets")
+    
+    # Add processing limit slider
+    st.markdown("---")
+    st.markdown("### Processing Limit")
+    st.caption("Process fewer stars for faster results. All stars are saved — you can process the rest later.")
+    
+    process_limit = st.slider(
+        "Stars to process in this run:",
+        min_value=1,
+        max_value=len(target_ids),
+        value=min(20, len(target_ids)),
+        step=5,
+        help="Lower = faster. Remaining stars stay saved for future runs."
+    )
+    
+    estimated_time = round(process_limit * 1.5 / 60, 1)  # ~1.5 sec per query
+    if process_limit > 50:
+        st.warning(f"Estimated processing time: ~{estimated_time} minutes for {process_limit} stars")
+    elif process_limit > 20:
+        st.info(f"Estimated processing time: ~{estimated_time} minutes for {process_limit} stars")
+    else:
+        st.success(f"Estimated processing time: < 1 minute for {process_limit} stars")
+    
+    # Limit targets
+    target_ids = target_ids[:process_limit]
+    if len(st.session_state.get("coords_list", [])) > process_limit:
+        st.session_state.coords_list = st.session_state.coords_list[:process_limit]
     
     preview_data = []
     for i, tid in enumerate(target_ids[:10]):
@@ -178,6 +222,8 @@ if target_ids:
         st.session_state.run_name = user_run_name
         st.session_state.target_ids = target_ids
         st.session_state.n_targets = len(target_ids)
+        
+        
         st.session_state.coords_list = coords_list
         
         st.success(f"Saved {len(target_ids)} targets to run: {user_run_name}")

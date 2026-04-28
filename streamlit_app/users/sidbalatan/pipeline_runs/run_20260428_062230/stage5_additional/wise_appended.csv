@@ -1,0 +1,8 @@
+source_id,W1 mag,W2 mag,W1-W2 (< 0.50),Status,Reasons,_passed,_ra,_dec
+1.644807934188828e+17,11.01,10.91,0.1,PASSED,W1-W2=0.10 — Clean,True,64.43314125427845,28.099173872134777
+1.5114921063577805e+17,10.72,10.71,0.01,PASSED,W1-W2=0.01 — Clean,True,68.07986992635716,26.46726951193044
+1.5131561914419456e+17,,,ERROR,ERROR,UsageFault: BAD_REQUEST: This geometric predicate is currently supported only wh,True,,
+5.056939475503006e+18,,,ERROR,ERROR,UsageFault: BAD_REQUEST: This geometric predicate is currently supported only wh,True,,
+1.6448814640299597e+17,,,ERROR,ERROR,UsageFault: BAD_REQUEST: This geometric predicate is currently supported only wh,True,,
+1.4759889188546688e+17,,,ERROR,ERROR,UsageFault: BAD_REQUEST: This geometric predicate is currently supported only wh,True,,
+3.131328718417227e+18,12.17,11.89,0.29,PASSED,W1-W2=0.29 — Clean,True,97.96012083213374,4.863939946872627

@@ -40,6 +40,15 @@ st.markdown(f"**{len(passed_gaia)}** Gaia survivors to cross-match")
 
 st.markdown("---")
 
+n_total = len(passed_gaia)
+tess_limit = min(20, n_total)  # Default
+if n_total > 10:
+        estimated_seconds = tess_limit * 2
+        if estimated_seconds > 60:
+            st.info(f"Estimated time: ~{estimated_seconds // 60} min {estimated_seconds % 60:.0f}s for {tess_limit} stars")
+        else:
+            st.info(f"Estimated time: ~{estimated_seconds:.0f}s for {tess_limit} stars")
+
 if st.button("Run TESS Cross-Match", type="primary"):
     with st.spinner("Querying TESS Input Catalog..."):
         tess_results = []

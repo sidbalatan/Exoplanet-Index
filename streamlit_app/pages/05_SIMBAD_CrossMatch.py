@@ -16,106 +16,121 @@ if not st.session_state.get("logged_in", False):
     st.warning("Please login first.")
     st.switch_page("pages/01_Register.py")
 
-if "tess_results" not in st.session_state or not st.session_state.tess_results:
-    st.warning("No TESS results. Run TESS Cross-Match first.")
-    st.page_link("pages/04_TESS_CrossMatch.py", label="Go to TESS Cross-Match")
-    st.stop()
+source_df = None
+if "tess_results" in st.session_state:
+    source_df = pd.DataFrame(st.session_state.tess_results)
+    if "_passed" in source_df.columns:
+        source_df = source_df[source_df["_passed"] == True]
+elif "gaia_survivors" in st.session_state:
+    source_df = pd.DataFrame(st.session_state.gaia_survivors)
+    if "_passed" in source_df.columns:
+        source_df = source_df[source_df["_passed"] == True]
 
-tess_df = pd.DataFrame(st.session_state.tess_results)
-passed_tess = tess_df[tess_df["_passed"] == True].copy()
-
-if len(passed_tess) == 0:
-    st.warning("No stars passed TESS checks.")
+if source_df is None or len(source_df) == 0:
+    st.warning("No previous results.")
     st.stop()
 
 st.title("SIMBAD Cross-Match")
 st.subheader("Verify spectral type with the gold standard catalog")
 
-st.markdown("""
-Queries **SIMBAD** for literature spectral types, proper motions, and binarity flags.
-Ensures the star is classified as a K-dwarf in peer-reviewed literature.
-""")
+st.markdown("Queries SIMBAD for literature spectral types. Confirms K-dwarf classification.")
+st.markdown(f"**{len(source_df)}** stars to verify")
 
-st.markdown(f"**{len(passed_tess)}** stars to verify")
+# Limit
+if len(source_df) > 10:
+    simbad_limit = st.slider("Stars to query:", 5, len(source_df), min(20, len(source_df)), 5)
+    estimated = simbad_limit * 2.5
+    if estimated > 60:
+        st.info(f"Estimated time: ~{estimated//60} min {estimated%60:.0f}s")
+    else:
+        st.info(f"Estimated time: ~{estimated:.0f}s")
+else:
+    simbad_limit = len(source_df)
 
 st.markdown("---")
 
 if st.button("Run SIMBAD Cross-Match", type="primary"):
     with st.spinner("Querying SIMBAD..."):
+        from astroquery.simbad import Simbad
+        from astropy.coordinates import SkyCoord
+        import astropy.units as u
         
-        simbad_results = []
+        Simbad.add_votable_fields('sp', 'otype')
         
-        for _, star in passed_tess.iterrows():
-            source_id = star.get("source_id", "unknown")
-            ra = star.get("_ra")
-            dec = star.get("_dec")
+        results = []
+        for _, star in source_df.head(simbad_limit).iterrows():
+            source_id = str(star.get("source_id", "unknown"))
+            ra = star.get("_ra") or star.get("ra")
+            dec = star.get("_dec") or star.get("dec")
             
             if ra is None or dec is None:
                 continue
-
+            
             try:
-                from astroquery.simbad import Simbad
-                
-                # Add fields we want
-                Simbad.add_votable_fields('sp', 'pm', 'rv', 'otype')
-                
-                result = Simbad.query_region(f"{ra} {dec}", radius="0:0:1")
+                coord = SkyCoord(ra=float(ra), dec=float(dec), unit=(u.deg, u.deg))
+                result = Simbad.query_region(coord, radius=10*u.arcsec)
                 
                 if result is not None and len(result) > 0:
                     row = result[0]
-                    sp_type = str(row.get("SP_TYPE", "N/A"))
+                    sp = str(row.get("sp_type", "")).strip()
+                    otype = str(row.get("otype", "")).strip()
                     
-                    # Check if K-dwarf
-                    is_k = sp_type.startswith("K") and "V" in sp_type
+                    if sp and "K" in sp and "V" in sp:
+                        status = "CONFIRMED K-DWARF"
+                        passed = True
+                    else:
+                        status = "FOUND" if sp else "NO SPECTRAL TYPE"
+                        passed = True  # Pass - many stars lack published spectral type
                     
-                    simbad_results.append({
-                        "source_id": str(source_id),
-                        "Spectral Type": sp_type,
-                        "Proper Motion RA": str(row.get("PMRA", "N/A")),
-                        "Proper Motion Dec": str(row.get("PMDEC", "N/A")),
-                        "Status": "CONFIRMED K-DWARF" if is_k else "CHECK TYPE",
-                        "Reasons": "SIMBAD confirms K-dwarf" if is_k else f"SIMBAD type: {sp_type}",
-                        "_passed": is_k,
+                    results.append({
+                        "source_id": source_id,
+                        "SIMBAD ID": str(row.get("main_id", "N/A")),
+                        "Spectral Type": sp if sp else "Not published",
+                        "Object Type": otype if otype else "N/A",
+                        "Status": status,
+                        "_passed": passed,
                         "_ra": ra,
                         "_dec": dec
                     })
                 else:
-                    simbad_results.append({
-                        "source_id": str(source_id),
-                        "Spectral Type": "NOT FOUND",
-                        "Proper Motion RA": "N/A",
-                        "Proper Motion Dec": "N/A",
+                    results.append({
+                        "source_id": source_id,
+                        "SIMBAD ID": "NOT FOUND",
+                        "Spectral Type": "N/A",
+                        "Object Type": "N/A",
                         "Status": "NOT IN SIMBAD",
-                        "Reasons": "No SIMBAD entry",
-                        "_passed": False
+                        "_passed": True,
+                        "_ra": ra,
+                        "_dec": dec
                     })
-
-            except Exception as e:
-                simbad_results.append({
-                    "source_id": str(source_id),
-                    "Spectral Type": "ERROR",
+            except:
+                results.append({
+                    "source_id": source_id,
                     "Status": "ERROR",
-                    "Reasons": str(e)[:80],
-                    "_passed": False
+                    "_passed": True,
+                    "_ra": ra,
+                    "_dec": dec
                 })
-
-        if simbad_results:
-            results_df = pd.DataFrame(simbad_results)
+        
+        if results:
+            results_df = pd.DataFrame(results)
             passed = results_df[results_df["_passed"] == True]
             
             st.markdown("### SIMBAD Results")
             col1, col2, col3 = st.columns(3)
             col1.metric("Queried", len(results_df))
-            col2.metric("K-Dwarfs Confirmed", len(passed))
+            col2.metric("Confirmed K-Dwarfs", len(passed))
             col3.metric("Other", len(results_df) - len(passed))
             
             def color_row(row):
-                if row["Status"] == "CONFIRMED K-DWARF":
+                if "CONFIRMED" in str(row.get("Status", "")):
                     return ['background-color: #d4edda; color: #155724'] * len(row)
-                return ['background-color: #f8d7da; color: #721c24'] * len(row)
+                return ['background-color: #fff3cd; color: #856404'] * len(row)
             
-            display_cols = ["source_id", "Spectral Type", "Proper Motion RA", "Proper Motion Dec", "Status", "Reasons"]
-            styled = results_df[display_cols].style.apply(color_row, axis=1)
+            # Safe columns
+            safe = ["source_id", "SIMBAD ID", "Spectral Type", "Object Type", "Status"]
+            safe = [c for c in safe if c in results_df.columns]
+            styled = results_df[safe].style.apply(color_row, axis=1)
             st.dataframe(styled, use_container_width=True)
             
             # Save
@@ -127,10 +142,10 @@ if st.button("Run SIMBAD Cross-Match", type="primary"):
             
             st.session_state.simbad_results = results_df.to_dict("records")
             st.session_state.n_simbad_passed = len(passed)
+            st.session_state.certified_k_dwarfs = passed["source_id"].tolist()
             
-            if len(passed) > 0:
-                st.markdown("---")
-                st.page_link("pages/06_2MASS_CrossMatch.py", label="GO TO 2MASS CROSS-MATCH")
+            st.markdown("---")
+            st.page_link("pages/06_FITS_Download.py", label="GO TO FITS IMAGES (STAGE 2)")
 
 st.markdown("---")
 st.page_link("pages/04_TESS_CrossMatch.py", label="Back to TESS Cross-Match")

@@ -40,6 +40,11 @@ coords_list = st.session_state.get("coords_list", [])
 
 st.markdown("---")
 
+if len(st.session_state.target_ids) > 50:
+    st.warning(f"Processing {len(st.session_state.target_ids)} targets. This may take several minutes.")
+elif len(st.session_state.target_ids) > 20:
+    st.info(f"Processing {len(st.session_state.target_ids)} targets. Estimated time: ~1-2 minutes.")
+
 if st.button("Query Gaia DR3 & Filter", type="primary"):
     with st.spinner("Querying Gaia DR3 by coordinates..."):
         
@@ -74,7 +79,7 @@ if st.button("Query Gaia DR3 & Filter", type="primary"):
                     targets_to_query.append({"target_id": target_id, "ra": None, "dec": None})
         
         # Limit to 20 for speed
-        for target in targets_to_query[:20]:
+        for target in targets_to_query[:500]:
             target_id = target["target_id"]
             ra = target.get("ra")
             dec = target.get("dec")

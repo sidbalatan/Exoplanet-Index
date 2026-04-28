@@ -1,0 +1,4 @@
+source_id,J-Ks (0.50-0.90),Status,Reasons,_passed,J mag,H mag,Ks mag,_ra,_dec
+1.632274532427332e+17,ERROR,ERROR,"ConnectTimeout: HTTPSConnectionPool(host='irsa.ipac.caltech.edu', port=443): Max",True,,,,,
+1.5114921063577805e+17,0.0,FAILED,J-Ks=0.00,False,0.02,0.02,0.01,68.07986992635716,26.46726951193044
+1.4759889188546688e+17,ERROR,ERROR,UsageFault: BAD_REQUEST: This geometric predicate is currently supported only wh,True,,,,,
