@@ -142,6 +142,11 @@ if st.button("Run Transit Detection", type="primary"):
             plt.tight_layout()
             st.pyplot(fig)
             plt.close()
+            # Download button
+            fig.savefig('temp_transit.png', dpi=150, bbox_inches='tight')
+            with open('temp_transit.png', 'rb') as img_file:
+                st.download_button("DOWNLOAD TRANSIT PLOT", img_file.read(),
+                                 f"{source_id}_transit.png", "image/png", key=f"dl_transit_{i}")
             
             col1, col2, col3, col4 = st.columns(4)
             col1.metric("Best Period", f"{best_period:.2f} d")

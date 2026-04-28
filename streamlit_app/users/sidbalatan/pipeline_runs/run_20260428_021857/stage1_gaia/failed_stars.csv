@@ -1,0 +1,4 @@
+source_id,Teff (3900-5300 K),logg (>= 4.0),Parallax SNR (> 5),RUWE (< 1.4),Status,Reasons
+4411172285413644800,5181.0,4.22,815.9,1.75,FAILED,High RUWE: 1.75 (need <1.4) - possible binary
+1953634043584381696,3617.0,5.48,1.7,1.67,FAILED,Too cool: Teff=3617K (need >=3900K); Poor parallax: SNR=1.7 (need >5); High RUWE: 1.67 (need <1.4) - possible binary
+5195958803421458048,5822.0,3.99,91.2,0.82,FAILED,Too hot: Teff=5822K (need <=5300K); Giant star: logg=3.99 (need >=4.0)
