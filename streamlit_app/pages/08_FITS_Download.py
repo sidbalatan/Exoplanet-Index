@@ -1,6 +1,6 @@
 """
 ExoX - Mod8: FITS Image Download (Stage 2: Exoplanet Probe)
-Downloads TESS cutout FITS images for visual confirmation of K-dwarfs
+Downloads real TESS cutout FITS images using lightkurve
 """
 
 import streamlit as st
@@ -10,6 +10,12 @@ import os
 import json
 from datetime import datetime
 import matplotlib.pyplot as plt
+
+try:
+    import lightkurve as lk
+    LK_AVAILABLE = True
+except ImportError:
+    LK_AVAILABLE = False
 
 st.set_page_config(page_title="FITS Download - ExoX", layout="wide")
 
@@ -23,148 +29,128 @@ if "certified_k_dwarfs" not in st.session_state or not st.session_state.certifie
     st.stop()
 
 st.title("FITS Image Download")
-st.subheader("Stage 2: Exoplanet Probe — Visual Confirmation")
+st.subheader("Stage 2: Exoplanet Probe — Real TESS Data")
 
 st.markdown("""
-**Why FITS images?** Before generating light curves, we visually confirm the star 
-exists in TESS data. FITS (Flexible Image Transport System) is the standard astronomy 
-image format. This module:
-- Downloads TESS cutout FITS files for each certified K-dwarf
-- Displays the image so you can visually verify the target
-- Shows header information (coordinates, sector, camera, CCD)
-- Saves images to your run folder
+**Downloading real TESS data from the MAST archive.** This module uses `lightkurve` 
+to search for TESS observations of your certified K-dwarfs.
 
-Stars that are visually confirmed proceed to light curve generation.
+**Note:** Not all stars have been observed by TESS. If the MAST archive does not 
+contain data for your target, it simply means TESS has not observed that region yet.
 """)
 
-st.markdown("### Certified K-Dwarfs Ready for Imaging")
-st.markdown(f"**{len(st.session_state.certified_k_dwarfs)}** stars to image")
+if not LK_AVAILABLE:
+    st.error("Lightkurve is not installed. Run: pip install lightkurve")
+    st.stop()
 
-# Load additional results for star details
+st.markdown("### Certified K-Dwarfs Ready for Imaging")
+st.markdown(f"**{len(st.session_state.certified_k_dwarfs)}** stars to search")
+
+# Get coordinates from previous results if available
+coords_available = False
 if "additional_results" in st.session_state:
     add_df = pd.DataFrame(st.session_state.additional_results)
-    passed_add = add_df[add_df["Status"] == "PASSED"].copy()
+    if "ra" in add_df.columns and "dec" in add_df.columns:
+        coords_available = True
 
 st.markdown("---")
 
-if st.button("Download FITS Images", type="primary"):
-    with st.spinner("Downloading TESS FITS images..."):
+if st.button("Search TESS Archive", type="primary"):
+    with st.spinner("Searching MAST for TESS data..."):
 
-        np.random.seed(42)
-        
         fits_results = []
+        
         for i, source_id in enumerate(st.session_state.certified_k_dwarfs):
             st.markdown(f"---")
             st.markdown(f"### Star {i+1}: {source_id}")
 
-            # Simulate FITS download
-            fits_available = np.random.random() > 0.1
-            
-            if fits_available:
-                # Simulate TESS sector and camera info
-                sector = int(np.random.uniform(1, 60))
-                camera = int(np.random.uniform(1, 4))
-                ccd = int(np.random.uniform(1, 4))
+            try:
+                # Try to search by Gaia DR3 ID
+                search_result = lk.search_tesscut(f"Gaia DR3 {source_id}")
                 
-                st.success(f"FITS image downloaded — Sector {sector}, Camera {camera}, CCD {ccd}")
-
-                # Create a simulated FITS-like image
-                fig, ax = plt.subplots(figsize=(6, 6))
-                
-                # Generate a star-like point spread function
-                x = np.linspace(-10, 10, 100)
-                y = np.linspace(-10, 10, 100)
-                X, Y = np.meshgrid(x, y)
-                
-                # Main star
-                star_flux = np.exp(-(X**2 + Y**2) / 4)
-                
-                # Add some background noise
-                noise = np.random.normal(0, 0.02, star_flux.shape)
-                
-                # Add a few faint background stars
-                bg_x = np.random.uniform(-8, 8, 3)
-                bg_y = np.random.uniform(-8, 8, 3)
-                for bx, by in zip(bg_x, bg_y):
-                    star_flux += 0.15 * np.exp(-((X-bx)**2 + (Y-by)**2) / 1.5)
-                
-                image = star_flux + noise
-                
-                ax.imshow(image, cmap='gray', origin='lower', vmin=0, vmax=1.2)
-                ax.set_title(f"TESS Cutout - {source_id}\nSector {sector}, Camera {camera}, CCD {ccd}")
-                ax.set_xlabel("Pixel X")
-                ax.set_ylabel("Pixel Y")
-                
-                st.pyplot(fig)
-                plt.close()
-
-                # Save simulated FITS info
-                st.caption(f"Simulated TESS observation — {np.random.randint(500, 2000)} frames available")
-
+                if search_result is not None and len(search_result) > 0:
+                    st.success(f"Found {len(search_result)} TESS observations!")
+                    
+                    for j, obs in enumerate(search_result):
+                        sector = obs.sector if hasattr(obs, 'sector') else 'N/A'
+                        camera = obs.camera if hasattr(obs, 'camera') else 'N/A'
+                        st.markdown(f"- Sector {sector}, Camera {camera}")
+                    
+                    try:
+                        tpf = search_result[0].download()
+                        
+                        fig, ax = plt.subplots(figsize=(6, 6))
+                        tpf.plot(frame=0, ax=ax, title=f"TESS Cutout - {source_id}")
+                        st.pyplot(fig)
+                        plt.close()
+                        
+                        fits_results.append({
+                            "source_id": source_id,
+                            "FITS Available": "YES",
+                            "N Observations": len(search_result),
+                            "Visual Confirmed": "YES",
+                            "Status": "CONFIRMED",
+                            "_confirmed": True
+                        })
+                        
+                    except Exception as e:
+                        st.warning(f"Download failed: {e}")
+                        fits_results.append({
+                            "source_id": source_id,
+                            "FITS Available": "FOUND BUT ERROR",
+                            "N Observations": len(search_result),
+                            "Status": "ERROR",
+                            "_confirmed": False
+                        })
+                else:
+                    st.warning("No TESS data in MAST archive for this target.")
+                    st.caption("This star has not been observed by TESS or is outside the mission footprint.")
+                    
+                    fits_results.append({
+                        "source_id": source_id,
+                        "FITS Available": "NOT IN MAST",
+                        "N Observations": 0,
+                        "Status": "NO DATA",
+                        "_confirmed": False
+                    })
+                    
+            except Exception as e:
+                st.error(f"Search failed: {e}")
                 fits_results.append({
                     "source_id": source_id,
-                    "FITS Available": "YES",
-                    "TESS Sector": sector,
-                    "Camera": camera,
-                    "CCD": ccd,
-                    "Frames": int(np.random.uniform(500, 2000)),
-                    "Visual Confirmed": "YES",
-                    "Status": "CONFIRMED",
-                    "_confirmed": True
-                })
-
-            else:
-                st.error("No TESS FITS data available for this star")
-                fits_results.append({
-                    "source_id": source_id,
-                    "FITS Available": "NO",
-                    "TESS Sector": None,
-                    "Camera": None,
-                    "CCD": None,
-                    "Frames": 0,
-                    "Visual Confirmed": "NO",
-                    "Status": "NO DATA",
+                    "FITS Available": "SEARCH ERROR",
+                    "N Observations": 0,
+                    "Status": "ERROR",
                     "_confirmed": False
                 })
 
-        # Summary
+        # Save
         fits_df = pd.DataFrame(fits_results)
         confirmed_df = fits_df[fits_df["_confirmed"] == True]
         n_confirmed = len(confirmed_df)
 
-        st.markdown("---")
-        st.markdown("## FITS Download Summary")
-
-        if n_confirmed == len(fits_df):
-            st.success(f"ALL {n_confirmed} STARS VISUALLY CONFIRMED | PROCEED TO LIGHT CURVES")
-        elif n_confirmed > 0:
-            st.warning(f"{n_confirmed} CONFIRMED | {len(fits_df) - n_confirmed} NO DATA | PROCEED TO LIGHT CURVES")
-        else:
-            st.error("NO STARS HAVE TESS DATA | CANNOT PROCEED")
-
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Stars Imaged", len(fits_df))
-        col2.metric("Visually Confirmed", n_confirmed)
-        col3.metric("No TESS Data", len(fits_df) - n_confirmed)
-
-        # Display results table
-        st.markdown("### Download Results")
-        st.dataframe(fits_df[["source_id", "FITS Available", "TESS Sector", "Camera", "CCD", "Frames", "Status"]], use_container_width=True)
-
-        # Save
         username = st.session_state.username
         run_name = st.session_state.run_name
-        run_folder = os.path.join("users", username, "pipeline_runs", run_name, "stage6_fits")
-        os.makedirs(run_folder, exist_ok=True)
-        fits_df.to_csv(os.path.join(run_folder, "fits_download.csv"), index=False)
+        fits_folder = os.path.join("users", username, "pipeline_runs", run_name, "stage6_fits")
+        os.makedirs(fits_folder, exist_ok=True)
+        fits_df.to_csv(os.path.join(fits_folder, "fits_download.csv"), index=False)
 
-        st.success("Saved FITS download results to your run folder")
         st.session_state.fits_results = fits_df.to_dict("records")
         st.session_state.n_fits_confirmed = n_confirmed
 
+        st.markdown("---")
+        st.markdown("## FITS Download Summary")
+        
+        if n_confirmed > 0:
+            st.success(f"{n_confirmed} STARS HAVE REAL TESS DATA")
+        else:
+            st.warning("No TESS data found in MAST for these targets.")
+
+        st.dataframe(fits_df[["source_id", "FITS Available", "Status"]], use_container_width=True)
+
         if n_confirmed > 0:
             st.markdown("---")
-            st.page_link("pages/09_LightCurve_Generation.py", label="Go to Light Curve Generation")
+            st.page_link("pages/09_LightCurve_Generation.py", label="GO TO LIGHT CURVE GENERATION")
 
 st.markdown("---")
 st.page_link("pages/07_Additional_Catalogs.py", label="Back to Stage 1")
