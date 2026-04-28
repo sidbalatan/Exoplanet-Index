@@ -6,39 +6,46 @@ Landing Page (Mod0)
 
 import streamlit as st
 
-# ============================================
-# PAGE CONFIGURATION
-# ============================================
 st.set_page_config(
     page_title="ExoX - Exoplanet Index",
-    page_icon=":telescope:",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# ============================================
-# HEADER
-# ============================================
 st.title("ExoX")
 st.subheader("Exoplanet Index for K-Dwarf Stars")
 
-# ============================================
-# STATS ROW
-# ============================================
+# Stats row
 col1, col2, col3, col4 = st.columns(4)
-
 with col1:
     st.metric(label="K-Dwarfs in Database", value="1,135")
 with col2:
-    st.metric(label="Pipeline Modules", value="16")
+    st.metric(label="Pipeline Modules", value="15")
 with col3:
     st.metric(label="Catalogs Used", value="8")
 with col4:
     st.metric(label="Export Formats", value="3")
 
-# ============================================
-# WHAT IS EXOX
-# ============================================
+st.markdown("---")
+
+# Quick Demo Section
+st.markdown("## Quick Demo: Experience the Full Pipeline")
+st.markdown("""
+Want to see the complete pipeline in action? Click below to run a **simulated demo** 
+with dummy data. You'll see all four stages:
+1. **K-Dwarf Search** — Validating a star across 5 catalogs
+2. **Exoplanet Probe** — FITS images, light curves, and transit detection
+3. **Habitability Grading** — 7-parameter analysis with letter grades
+4. **Community Sharing** — Share your discoveries
+
+No login required for the demo. Results are simulated for demonstration purposes.
+""")
+
+col_demo1, col_demo2, col_demo3 = st.columns([1, 1, 1])
+with col_demo2:
+    if st.button("Run Simulated Demo", type="primary", use_container_width=True):
+        st.switch_page("pages/00_Simulated_Demo.py")
+
 st.markdown("---")
 st.header("What is ExoX?")
 
@@ -54,74 +61,40 @@ It helps researchers:
 - **Share** discoveries with the community through the gallery
 """)
 
-# ============================================
-# HOW IT WORKS
-# ============================================
 st.markdown("---")
 st.header("How It Works")
 
-step_col1, step_col2, step_col3, step_col4, step_col5 = st.columns(5)
-
-with step_col1:
+col1, col2, col3, col4, col5 = st.columns(5)
+with col1:
     st.markdown("#### 1. Register")
     st.markdown("Create an account with email verification.")
-
-with step_col2:
+with col2:
     st.markdown("#### 2. Input")
     st.markdown("Enter Gaia DR3 IDs or upload a CSV.")
-
-with step_col3:
+with col3:
     st.markdown("#### 3. Filter")
     st.markdown("Run the 8-stage K-dwarf pipeline.")
-
-with step_col4:
+with col4:
     st.markdown("#### 4. Analyze")
     st.markdown("Generate TESS light curves for candidates.")
-
-with step_col5:
+with col5:
     st.markdown("#### 5. Share")
     st.markdown("Upload results to the community gallery.")
 
-# ============================================
-# PIPELINE STAGES OVERVIEW
-# ============================================
 st.markdown("---")
-st.header("Pipeline Stages")
 
-st.markdown("""
-| Stage | Module | What It Does |
-|-------|--------|-------------|
-| 1 | Gaia DR3 Filter | Queries Gaia archive, applies K-dwarf cuts (Teff, logg, parallax, RUWE) |
-| 2 | TESS Cross-Match | Adds TIC parameters and observation info |
-| 3 | SIMBAD Cross-Match | Verifies spectral type, flags binaries and variables |
-| 4 | 2MASS Cross-Match | Adds near-IR photometry, confirms K-dwarf colors |
-| 5 | Additional Catalogs | WISE, APASS, UCAC4 for multi-wavelength confirmation |
-| 6 | Exoplanet Archive | Checks for known planets, prevents rediscovery |
-| 7 | Habitability Grading | ESI, HZD, HZ Grade A+ to F |
-| 8 | Final Report | Merges all data, generates plots and exports |
-""")
-
-# ============================================
-# CALL TO ACTION
-# ============================================
-st.markdown("---")
 col_left, col_right = st.columns(2)
-
 with col_left:
     st.markdown("### Ready to Start?")
     st.markdown("Register an account to begin searching for exoplanets.")
     if st.button("Register", type="primary", use_container_width=True):
         st.switch_page("pages/01_Register.py")
-
 with col_right:
     st.markdown("### Already Have an Account?")
     st.markdown("Login to access your dashboard and previous runs.")
     if st.button("Login", use_container_width=True):
         st.switch_page("pages/01_Register.py")
 
-# ============================================
-# FOOTER
-# ============================================
 st.markdown("---")
 st.markdown(
     "<p style='text-align: center; color: #888;'>"

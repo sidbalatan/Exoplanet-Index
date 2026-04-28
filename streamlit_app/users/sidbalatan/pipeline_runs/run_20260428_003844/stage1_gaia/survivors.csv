@@ -1,0 +1,4 @@
+source_id,Teff (3900-5300 K),logg (>= 4.0),Parallax SNR (> 5),RUWE (< 1.4),Status,Reasons
+3456789012345678901,4812.0,4.6,48.0,1.03,PASSED,All filters passed
+5678901234567890123,4582.0,4.79,438.6,1.23,PASSED,All filters passed
+6789012345678901234,5263.0,4.59,36.0,0.91,PASSED,All filters passed

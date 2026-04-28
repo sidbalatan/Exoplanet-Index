@@ -236,7 +236,9 @@ else:
 # ============================================
 # TRANSITION TO STAGE 2
 # ============================================
-if n_passed > 0:
+n_certified = st.session_state.get("n_additional_passed", 0)
+
+if n_certified > 0:
     st.markdown("---")
     st.markdown("## PROCEED TO STAGE 2: EXOPLANET PROBE")
     st.markdown("""
@@ -257,7 +259,8 @@ if n_passed > 0:
     with col_b:
         st.page_link("pages/06_2MASS_CrossMatch.py", label="Back to 2MASS Cross-Match")
 else:
-    st.warning("No stars passed all validation stages. Cannot proceed to Exoplanet Probe.")
+    st.markdown("---")
+    st.warning("No stars passed all validation stages. Cannot proceed to Exoplanet Probe. Run the catalog checks first.")
 
 st.markdown("---")
 st.page_link("pages/06_2MASS_CrossMatch.py", label="Back to 2MASS Cross-Match")
