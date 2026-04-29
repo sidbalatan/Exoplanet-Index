@@ -145,7 +145,7 @@ if st.button("Run SIMBAD Cross-Match", type="primary"):
             st.session_state.certified_k_dwarfs = passed["source_id"].tolist()
             
             st.markdown("---")
-            st.page_link("pages/06_FITS_Download.py", label="GO TO FITS IMAGES (STAGE 2)")
+            st.page_link("pages/05b_K_Dwarf_Certificate.py", label="VIEW K-DWARF CERTIFICATE")
 
 st.markdown("---")
 st.page_link("pages/04_TESS_CrossMatch.py", label="Back to TESS Cross-Match")
