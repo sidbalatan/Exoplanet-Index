@@ -224,7 +224,7 @@ if st.button("Run Transit Detection", type="primary"):
             </div>
             """, unsafe_allow_html=True)
             st.markdown("")
-            st.page_link("pages/11_Habitability_Grading.py", label="GO TO HABITABILITY GRADING")
+            st.page_link("pages/09_2MASS_CrossMatch.py", label="GO TO 2MASS (STAGE 3)")
 
 st.markdown("---")
 st.page_link("pages/07_LightCurve_Generation.py", label="Back to Light Curves")

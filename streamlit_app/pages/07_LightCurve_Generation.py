@@ -1,33 +1,12 @@
 """
-ExoX - Mod9: Light Curve Generation (Stage 2: Exoplanet Probe)
-Real TESS light curves using coordinates from pipeline
+ExoX - Mod7: Light Curve Generation (Stage 2)
+Real TESS light curves — no daily limit
 """
 
 import streamlit as st
 import pandas as pd
-import numpy as np
 import os
-import json
-from datetime import datetime
 import matplotlib.pyplot as plt
-
-# Load SEIP catalog for coordinate lookup
-@st.cache_data
-def load_seip_catalog():
-    try:
-        return pd.read_csv("data/SEIP_data_17k.csv")
-    except:
-        return None
-
-seip_catalog = load_seip_catalog()
-
-try:
-    import lightkurve as lk
-    from astropy.coordinates import SkyCoord
-    import astropy.units as u
-    LK_AVAILABLE = True
-except ImportError:
-    LK_AVAILABLE = False
 
 st.set_page_config(page_title="Light Curves - ExoX", layout="wide")
 
@@ -35,143 +14,111 @@ if not st.session_state.get("logged_in", False):
     st.warning("Please login first.")
     st.switch_page("pages/01_Register.py")
 
-if "fits_results" not in st.session_state or not st.session_state.fits_results:
-    st.warning("No FITS results. Run FITS Download first.")
-    st.page_link("pages/06_FITS_Download.py", label="Go to FITS Download")
-    st.stop()
-
-fits_df = pd.DataFrame(st.session_state.fits_results)
-confirmed = fits_df[fits_df["Status"] == "CONFIRMED"].copy()
-
-if len(confirmed) == 0:
-    st.warning("No stars with TESS data.")
-    st.stop()
-
-if not LK_AVAILABLE:
-    st.error("Lightkurve not installed.")
+if "certified_k_dwarfs" not in st.session_state:
+    st.warning("No certified K-dwarfs. Complete Stage 1 first.")
+    st.page_link("pages/05_SIMBAD_CrossMatch.py", label="Go to SIMBAD")
     st.stop()
 
 st.title("Light Curve Generation")
 st.subheader("Stage 2: Exoplanet Probe — Real TESS Photometry")
 
-st.markdown("**Downloading real TESS photometry from MAST. Daily limit: 12.**")
+certified = st.session_state.certified_k_dwarfs
+st.markdown(f"**{len(certified)}** certified K-dwarfs available")
 
-# Daily limit
-username = st.session_state.username
-today = datetime.now().strftime("%Y-%m-%d")
-usage_file = f"users/{username}/lightcurve_usage.json"
+@st.cache_data
+def load_seip():
+    try: return pd.read_csv("data/SEIP_data_17k.csv")
+    except: return None
 
-if os.path.exists(usage_file):
-    with open(usage_file, 'r') as f:
-        usage = json.load(f)
-    if usage.get("date") != today:
-        usage = {"date": today, "count": 0}
-else:
-    usage = {"date": today, "count": 0}
+seip = load_seip()
 
-remaining = 12 - usage["count"]
-if remaining <= 0:
-    st.error("Daily limit reached.")
-    st.stop()
+if "processed_lc" not in st.session_state:
+    st.session_state.processed_lc = []
 
-st.info(f"Daily limit: {usage['count']} used, {remaining} remaining")
-max_stars = min(remaining, len(confirmed))
+remaining = [c for c in certified if c not in st.session_state.processed_lc]
+processed = [c for c in certified if c in st.session_state.processed_lc]
 
+st.markdown(f"**{len(processed)}** processed | **{len(remaining)}** remaining")
 st.markdown("---")
 
-if st.button("Generate Real Light Curves", type="primary"):
-    with st.spinner("Downloading TESS photometry..."):
-        lc_results = []
-        current_usage = usage["count"]
-        
-        for i, (_, star) in enumerate(confirmed.head(max_stars).iterrows()):
-            if current_usage >= 12:
-                break
+if remaining:
+    selected = st.multiselect(
+        "Select stars to download:",
+        remaining,
+        default=remaining[:min(1, len(remaining))],
+        max_selections=4
+    )
+    
+    if selected:
+        if st.button("DOWNLOAD LIGHT CURVES", type="primary"):
+            import lightkurve as lk
+            from astropy.coordinates import SkyCoord
+            import astropy.units as u
             
-            source_id = star["source_id"]
-            ra = star.get("_ra")
-            dec = star.get("_dec")
-            
-            st.markdown(f"---")
-            st.markdown(f"### Star {i+1}: {source_id}")
-            
-            if ra is None or dec is None:
-                st.warning("No coordinates available.")
-                continue
-            
-            try:
-                coord = SkyCoord(ra=ra, dec=dec, unit="deg")
-                search = lk.search_lightcurve(coord, mission="TESS")
+            for source_id in selected:
+                st.markdown(f"### {str(source_id)[:50]}...")
                 
-                if search and len(search) > 0:
-                    st.success(f"Found light curve — downloading...")
-                    lc = search[0].download()
-                    lc = lc.remove_nans()
-                    lc_flat = lc.flatten(window_length=101)
-                    lc_clean = lc_flat.remove_outliers(sigma=5)
-                    
-                    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8))
-                    lc.scatter(ax=ax1, s=2, alpha=0.5, c='gray')
-                    ax1.set_title(f'Raw TESS Light Curve - {source_id}')
-                    ax1.set_xlabel('Time (BJD)')
-                    ax1.set_ylabel('Flux')
-                    
-                    lc_clean.scatter(ax=ax2, s=2, alpha=0.5, c='black')
-                    ax2.set_title('Detrended & Normalized')
-                    ax2.set_xlabel('Time (BJD)')
-                    ax2.set_ylabel('Normalized Flux')
-                    ax2.axhline(1.0, color='r', linestyle='--')
-                    
-                    plt.tight_layout()
-                    st.pyplot(fig)
-                    plt.close()
-                    # Download button
-                    fig.savefig('temp_lc.png', dpi=150, bbox_inches='tight')
-                    with open('temp_lc.png', 'rb') as img_file:
-                        st.download_button("DOWNLOAD LIGHT CURVE", img_file.read(),
-                                         f"{source_id}_lightcurve.png", "image/png", key=f"dl_lc_{i}")
-                    
-                    # Save
-                    lc_folder = os.path.join("users", username, "pipeline_runs", 
-                                            st.session_state.run_name, "lightcurves")
-                    os.makedirs(lc_folder, exist_ok=True)
-                    
-                    lc_data = pd.DataFrame({
-                        "time": lc_clean.time.value,
-                        "flux": lc_clean.flux.value
-                    })
-                    lc_data.to_csv(os.path.join(lc_folder, f"{source_id}_lightcurve.csv"), index=False)
-                    
-                    st.success(f"Saved: {len(lc_clean.flux)} points over {lc_clean.time.value[-1] - lc_clean.time.value[0]:.1f} days")
-                    
-                    lc_results.append({
-                        "source_id": source_id,
-                        "N Points": len(lc_clean.flux),
-                        "Status": "REAL TESS DATA"
-                    })
-                    
-                else:
-                    st.warning("No light curves in MAST.")
-                    lc_results.append({"source_id": source_id, "Status": "NOT IN MAST"})
-                    
-            except Exception as e:
-                st.error(f"Error: {e}")
-                lc_results.append({"source_id": source_id, "Status": "FAILED"})
+                ra, dec = None, None
+                
+                # Try stored coordinates first
+                coords_dict = st.session_state.get("star_coords", {})
+                if source_id in coords_dict:
+                    ra = coords_dict[source_id].get("ra")
+                    dec = coords_dict[source_id].get("dec")
+                
+                # Fallback to SEIP lookup
+                if (ra is None or dec is None) and seip is not None:
+                    match = seip[seip["objid"] == str(source_id)]
+                    if len(match) == 0:
+                        match = seip[seip["objid"].astype(str).str.contains(str(source_id)[:15], na=False)]
+                    if len(match) > 0:
+                        ra = float(match.iloc[0]["ra"])
+                        dec = float(match.iloc[0]["dec"])
+                
+                if ra is None:
+                    st.error("No coordinates found for this star")
+                    continue
+                
+                with st.spinner(f"Downloading from MAST..."):
+                    try:
+                        coord = SkyCoord(ra=ra, dec=dec, unit=(u.deg, u.deg))
+                        search = lk.search_lightcurve(coord, mission="TESS")
+                        
+                        if search and len(search) > 0:
+                            lc = search[0].download().remove_nans()
+                            lc = lc.flatten(101).remove_outliers(5)
+                            
+                            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8))
+                            ax1.set_title('Raw TESS Light Curve')
+                            ax2.set_title('Detrended & Normalized')
+                            ax2.axhline(1.0, color='r', linestyle='--')
+                            plt.tight_layout()
+                            st.pyplot(fig)
+                            plt.close()
+                            
+                            # Save
+                            lc_folder = os.path.join("users", st.session_state.username,
+                                                    "pipeline_runs", st.session_state.run_name, "lightcurves")
+                            os.makedirs(lc_folder, exist_ok=True)
+                            pd.DataFrame({
+                                "time": lc.time.value,
+                                "flux_detrended": lc.flux.value
+                            }).to_csv(os.path.join(lc_folder, f"{source_id}_lightcurve.csv"), index=False)
+                            
+                            st.success(f"Saved! {len(lc.flux)} points")
+                        else:
+                            st.warning("No TESS light curve for this star")
+                    except Exception as e:
+                        st.error(f"MAST error: {str(e)[:100]}")
+                
+                st.session_state.processed_lc.append(source_id)
             
-            current_usage += 1
-            usage["count"] = current_usage
-            usage["date"] = today
-            with open(usage_file, 'w') as f:
-                json.dump(usage, f)
+            st.rerun()
 
-        lc_df = pd.DataFrame(lc_results)
-        st.session_state.lightcurve_results = lc_df.to_dict("records")
-        
-        n_real = len(lc_df[lc_df["Status"] == "REAL TESS DATA"])
-        st.success(f"Generated {n_real} real TESS light curves")
-        
-        st.markdown("---")
-        st.page_link("pages/08_Transit_Detection.py", label="GO TO TRANSIT DETECTION")
+if processed:
+    st.markdown("---")
+    st.success(f"{len(processed)} light curves processed")
+    st.page_link("pages/08_Transit_Detection.py", label="GO TO TRANSIT DETECTION")
 
 st.markdown("---")
-st.page_link("pages/06_FITS_Download.py", label="Back to FITS Download")
+st.page_link("pages/06_FITS_Download.py", label="Back to FITS Images")

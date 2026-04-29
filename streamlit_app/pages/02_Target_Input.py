@@ -4,6 +4,7 @@ Two methods: Manual input or CSV upload
 """
 
 import streamlit as st
+from components.session_manager import show_save_button, load_progress
 import pandas as pd
 import os
 import json
@@ -14,6 +15,7 @@ st.set_page_config(page_title="Target Input - ExoX", layout="wide")
 if not st.session_state.get("logged_in", False):
     st.warning("Please login first.")
     st.switch_page("pages/01_Register.py")
+load_progress()
 
 st.title("Target Input")
 st.subheader("Enter the stars you want to search")

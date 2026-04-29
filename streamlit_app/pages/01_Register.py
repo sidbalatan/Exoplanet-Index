@@ -4,6 +4,9 @@ User registration with email OTP verification
 """
 
 import streamlit as st
+import sys
+sys.path.append("..")
+from components.styling import apply_style
 import json
 import os
 import hashlib
@@ -76,6 +79,7 @@ if 'registration_data' not in st.session_state:
 # ============================================
 st.title("ExoX")
 st.subheader("Account Access")
+apply_style()
 
 # ============================================
 # LOGIN VIEW
@@ -243,7 +247,7 @@ elif st.session_state.logged_in:
         st.markdown("You are logged in.")
 
         if st.button("Go to Dashboard", type="primary", use_container_width=True):
-            st.switch_page("pages/12_Dashboard.py")
+            st.switch_page("Home.py")
 
         if st.button("Logout", use_container_width=True):
             st.session_state.logged_in = False
